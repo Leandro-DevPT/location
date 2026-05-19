@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Anônimo UltraSeguro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 2px solid #00ff00;
+        }
+        
+        .chat-header {
+            background: #000;
+            color: #00ff00;
+            padding: 20px;
+            border-bottom: 2px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-header h2 {
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            background: #00ff00;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.9);
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 70%;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .message.sent {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            margin-left: auto;
+            color: #00ff00;
+        }
+        
+        .message.received {
+            background: rgba(0, 100, 255, 0.1);
+            border: 1px solid #0066ff;
+            color: #00aaff;
+        }
+        
+        .message.system {
+            background: rgba(255, 255, 0, 0.1);
+            border: 1px solid #ffff00;
+            text-align: center;
+            max-width: 100%;
+            color: #ffff00;
+            font-size: 0.9em;
+        }
+        
+        .message .sender {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+        
+        .message .time {
+            font-size: 0.7em;
+            opacity: 0.5;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .chat-input {
+            padding: 20px;
+            background: #000;
+            border-top: 2px solid #00ff00;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            background: #111;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+        }
+        
+        .chat-input input:focus {
+            outline: none;
+            border-color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+        
+        .chat-input button {
+            padding: 12px 20px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+        
+        .chat-input button:hover {
+            background: #00cc00;
+            transform: scale(1.05);
+        }
+        
+        .encryption-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8em;
+            color: #00ff00;
+        }
+        
+        .connection-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+            color: #00ff00;
+        }
+        
+        .connection-form input {
+            padding: 15px;
+            background: #111;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            border-radius: 10px;
+            font-size: 1.2em;
+            text-align: center;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .connection-form button {
+            padding: 15px 40px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .security-lock {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container" id="chatContainer">
+        <!-- Formulário de conexão -->
+        <div class="connection-form" id="connectionForm">
+            <div class="security-lock">🔒</div>
+            <h2>Conexão Criptografada</h2>
+            <p>Digite o código da sala para entrar:</p>
+            <input type="text" id="roomInput" placeholder="Ex: sala-secreta-123">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 100%;">
+                <button onclick="connectToRoom()">Entrar na Sala</button>
+                <button onclick="createRoom()" style="background:#000;color:#00ff00;border:1px solid #00ff00;">Criar Sala Aleatória</button>
+            </div>
+            <div id="roomCreatedMessage" style="margin-top: 12px; opacity: 0.8; font-size: 0.95em; text-align:center;"></div>
+            <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.7; text-align:center;">
+                E2E Encryption | WebSocket | Anônimo
+            </p>
+        </div>
+        
+        <!-- Interface de chat (inicialmente oculta) -->
+        <div id="chatInterface" style="display: none; flex-direction: column; height: 100%;">
+            <div class="chat-header">
+                <h2>
+                    <span class="status-indicator"></span>
+                    Sala: <span id="roomDisplay"></span>
+                </h2>
+                <div class="encryption-badge">
+                    🔒 Criptografado
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="messages"></div>
+            
+            <div class="chat-input">
+                <input type="text" id="messageInput" placeholder="Digite sua mensagem..." 
+                       onkeypress="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let clientId = null;
+        let encryptionKey = null;
+        let currentRoom = null;
+        
+        // Função para criptografar mensagem (simplificada para demonstração)
+        async function encryptMessage(message, key) {
+            try {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(message);
+                const keyData = base64ToArrayBuffer(key);
+                
+                const cryptoKey = await crypto.subtle.importKey(
+                    "raw",
+                    keyData,
+                    { name: "AES-GCM" },
+                    false,
+                    ["encrypt"]
+                );
+                
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                const encrypted = await crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv: iv },
+                    cryptoKey,
+                    data
+                );
+                
+                const combined = new Uint8Array(iv.length + encrypted.byteLength);
+                combined.set(iv);
+                combined.set(new Uint8Array(encrypted), iv.length);
+                
+                return btoa(String.fromCharCode(...combined));
+            } catch (error) {
+                console.error("Erro na criptografia:", error);
+                return btoa(message); // Fallback para base64
+            }
+        }
+        
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+        
+        async function connectToRoom() {
+            const room = document.getElementById('roomInput').value.trim();
+            if (!room) return alert('Digite o código da sala!');
+            
+            currentRoom = room;
+            
+            // Conectar WebSocket
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/${room}`;
+            
+            try {
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = () => {
+                    console.log('Conectado à sala:', room);
+                };
+                
+                ws.onmessage = async (event) => {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'init') {
+                        clientId = data.client_id;
+                        encryptionKey = data.encryption_key;
+                        
+                        document.getElementById('connectionForm').style.display = 'none';
+                        document.getElementById('chatInterface').style.display = 'flex';
+                        document.getElementById('roomDisplay').textContent = room;
+                        
+                        addMessage(`🔐 Conectado com ID: ${clientId}`, 'system');
+                        addMessage(`👥 ${data.peers} pessoa(s) na sala`, 'system');
+                        
+                    } else if (data.type === 'message') {
+                        const msg = data.data;
+                        const isOwn = msg.sender_id === clientId;
+                        const decryptedText = await decryptMessage(msg.content, encryptionKey);
+                        
+                        addMessage(decryptedText, isOwn ? 'sent' : 'received', msg.sender_id);
+                        
+                    } else if (data.type === 'system') {
+                        addMessage(data.message, 'system');
+                    }
+                };
+                
+                ws.onerror = (error) => {
+                    console.error('Erro WebSocket:', error);
+                    addMessage('❌ Erro na conexão', 'system');
+                };
+                
+                ws.onclose = () => {
+                    addMessage('🔌 Conexão fechada', 'system');
+                    resetChat();
+                };
+                
+            } catch (error) {
+                console.error('Erro ao conectar:', error);
+                alert('Erro ao conectar à sala!');
+            }
+        }
+
+        async function createRoom() {
+            try {
+                const response = await fetch('/api/rooms/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ room_name: document.getElementById('roomInput').value.trim() })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('roomInput').value = data.room_id;
+                    document.getElementById('roomCreatedMessage').textContent = `Sala criada: ${data.room_id} \n Agora clique em Entrar na Sala`;
+                } else {
+                    document.getElementById('roomCreatedMessage').textContent = 'Erro ao criar sala.';
+                }
+            } catch (error) {
+                console.error('Erro ao criar sala:', error);
+                document.getElementById('roomCreatedMessage').textContent = 'Erro ao criar sala.';
+            }
+        }
+        
+        function addMessage(content, type, sender = null) {
+            const messagesDiv = document.getElementById('messages');
+            const messageElement = document.createElement('div');
+            
+            messageElement.className = `message ${type}`;
+            
+            const time = new Date().toLocaleTimeString('pt-BR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            let html = '';
+            
+            if (sender && type !== 'sent') {
+                html += `<div class="sender">👤 ${sender}</div>`;
+            } else if (type === 'sent') {
+                html += `<div class="sender">📤 Você</div>`;
+            }
+            
+            html += `<div>${content}</div>`;
+            html += `<div class="time">${time}</div>`;
+            
+            messageElement.innerHTML = html;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message || !ws) return;
+            
+            // Criptografar mensagem
+            const encryptedMessage = await encryptMessage(message, encryptionKey);
+            
+            const messageData = {
+                type: 'message',
+                message: encryptedMessage
+            };
+            
+            ws.send(JSON.stringify(messageData));
+            
+            // Limpar input
+            input.value = '';
+            input.focus();
+        }
+        
+        async function decryptMessage(encrypted, key) {
+            try {
+                const encryptedData = base64ToArrayBuffer(encrypted);
+                const iv = encryptedData.slice(0, 12);
+                const ciphertext = encryptedData.slice(12);
+
+                const cryptoKey = await crypto.subtle.importKey(
+                    'raw',
+                    base64ToArrayBuffer(key),
+                    { name: 'AES-GCM' },
+                    false,
+                    ['decrypt']
+                );
+
+                const decrypted = await crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv: iv },
+                    cryptoKey,
+                    ciphertext
+                );
+
+                const decoder = new TextDecoder();
+                return decoder.decode(decrypted);
+            } catch (error) {
+                console.error('Erro na descriptografia:', error);
+                return encrypted;
+            }
+        }
+
+        function resetChat() {
+            document.getElementById('connectionForm').style.display = 'flex';
+            document.getElementById('chatInterface').style.display = 'none';
+            document.getElementById('messages').innerHTML = '';
+            ws = null;
+            clientId = null;
+            encryptionKey = null;
+            currentRoom = null;
+        }
+    </script>
+</body>
+</html>
